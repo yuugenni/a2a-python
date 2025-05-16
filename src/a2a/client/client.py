@@ -24,6 +24,7 @@ from a2a.types import (
     SetTaskPushNotificationConfigRequest,
     SetTaskPushNotificationConfigResponse,
 )
+from a2a.utils.telemetry import SpanKind, trace_class
 
 
 async def _make_httpx_request(
@@ -81,6 +82,7 @@ class A2ACardResolver:
         return AgentCard.model_validate(response_json)
 
 
+@trace_class(kind=SpanKind.CLIENT)
 class A2AClient:
     """A2A Client."""
 
