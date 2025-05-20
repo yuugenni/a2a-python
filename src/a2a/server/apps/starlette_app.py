@@ -1,6 +1,7 @@
 import json
 import logging
 import traceback
+
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -36,6 +37,7 @@ from a2a.types import (
     UnsupportedOperationError,
 )
 from a2a.utils.errors import MethodNotImplementedError
+
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +204,7 @@ class A2AStarletteApplication:
     def _create_response(
         self,
         handler_result: (
-            AsyncGenerator[SendStreamingMessageResponse, None]
+            AsyncGenerator[SendStreamingMessageResponse]
             | JSONRPCErrorResponse
             | JSONRPCResponse
         ),
@@ -225,8 +227,8 @@ class A2AStarletteApplication:
         if isinstance(handler_result, AsyncGenerator):
             # Result is a stream of SendStreamingMessageResponse objects
             async def event_generator(
-                stream: AsyncGenerator[SendStreamingMessageResponse, None],
-            ) -> AsyncGenerator[dict[str, str], None]:
+                stream: AsyncGenerator[SendStreamingMessageResponse],
+            ) -> AsyncGenerator[dict[str, str]]:
                 async for item in stream:
                     yield {'data': item.root.model_dump_json(exclude_none=True)}
 
@@ -247,29 +249,35 @@ class A2AStarletteApplication:
         """Handles GET requests for the agent card."""
         # Construct the public view of the agent card.
         public_card_data = {
-            "version": self.agent_card.version,
-            "name": self.agent_card.name,
-            "providerName": self.agent_card.provider.organization if self.agent_card.provider else None,
-            "url": self.agent_card.url,
-            "authentication": self.agent_card.authentication.model_dump(mode='json', exclude_none=True)
-            if self.agent_card.authentication else None, # authentication is a single object, can be None if made Optional
-            "skills": [
+            'version': self.agent_card.version,
+            'name': self.agent_card.name,
+            'providerName': self.agent_card.provider.organization
+            if self.agent_card.provider
+            else None,
+            'url': self.agent_card.url,
+            'authentication': self.agent_card.authentication.model_dump(
+                mode='json', exclude_none=True
+            )
+            if self.agent_card.authentication
+            else None,  # authentication is a single object, can be None if made Optional
+            'skills': [
                 f.model_dump(mode='json', exclude_none=True)
-                for f in self.agent_card.skills if f.id == 'hello_world' # Explicitly filter for public skills
+                for f in self.agent_card.skills
+                if f.id == 'hello_world'  # Explicitly filter for public skills
             ]
             if self.agent_card.skills
-            else [], # Default to empty list if no skills
-            "capabilities": self.agent_card.capabilities.model_dump(
+            else [],  # Default to empty list if no skills
+            'capabilities': self.agent_card.capabilities.model_dump(
                 mode='json', exclude_none=True
             ),
-            "supportsAuthenticatedExtendedCard": (
+            'supportsAuthenticatedExtendedCard': (
                 self.agent_card.supportsAuthenticatedExtendedCard
             ),
             # Include other fields from types.py AgentCard designated as public
-            "description": self.agent_card.description,
-            "documentationUrl": self.agent_card.documentationUrl,
-            "defaultInputModes": self.agent_card.defaultInputModes,
-            "defaultOutputModes": self.agent_card.defaultOutputModes,
+            'description': self.agent_card.description,
+            'documentationUrl': self.agent_card.documentationUrl,
+            'defaultInputModes': self.agent_card.defaultInputModes,
+            'defaultOutputModes': self.agent_card.defaultOutputModes,
         }
         # Filter out None values from the public card data.
         public_card_data_cleaned = {
@@ -283,7 +291,7 @@ class A2AStarletteApplication:
         """Handles GET requests for the authenticated extended agent card."""
         if not self.agent_card.supportsAuthenticatedExtendedCard:
             return JSONResponse(
-                {"error": "Extended agent card not supported or not enabled."},
+                {'error': 'Extended agent card not supported or not enabled.'},
                 status_code=404,
             )
 
@@ -357,7 +365,9 @@ class A2AStarletteApplication:
         Returns:
             A configured Starlette application instance.
         """
-        app_routes = self.routes(agent_card_url, extended_agent_card_url, rpc_url)
+        app_routes = self.routes(
+            agent_card_url, extended_agent_card_url, rpc_url
+        )
         if 'routes' in kwargs:
             kwargs['routes'].extend(app_routes)
         else:

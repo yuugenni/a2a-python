@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -1408,7 +1408,7 @@ class AgentCard(BaseModel):
     """
     The version of the agent - format is up to the provider.
     """
-    supportsAuthenticatedExtendedCard: Optional[bool] = Field(default=None)
+    supportsAuthenticatedExtendedCard: bool | None = Field(default=None)
     """
     Optional field indicating there is an extended card available post authentication at the /agent/authenticatedExtendedCard endpoint.
     """

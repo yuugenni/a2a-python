@@ -1,10 +1,11 @@
 import json
-import logging
+
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import uuid4
 
 import httpx
+
 from httpx_sse import SSEError, aconnect_sse
 
 from a2a.client.errors import A2AClientHTTPError, A2AClientJSONError
@@ -53,7 +54,10 @@ class A2ACardResolver:
             )
             response.raise_for_status()
             public_agent_card_data = response.json()
-            logger.info("Successfully fetched public agent card data: %s", public_agent_card_data) # Added for verbosity
+            logger.info(
+                'Successfully fetched public agent card data: %s',
+                public_agent_card_data,
+            )  # Added for verbosity
             # print(f"DEBUG: Fetched public agent card data:\n{json.dumps(public_agent_card_data, indent=2)}") # Added for direct output
             agent_card = AgentCard.model_validate(public_agent_card_data)
         except httpx.HTTPStatusError as e:
@@ -77,9 +81,9 @@ class A2ACardResolver:
             # The extended card URL is relative to the agent's base URL specified *in* the agent card.
             if not agent_card.url:
                 logger.warning(
-                    "Agent card (from %s) indicates support for an extended card "
+                    'Agent card (from %s) indicates support for an extended card '
                     "but does not specify its own base 'url' field. "
-                    "Cannot fetch extended card. Proceeding with public card.",
+                    'Cannot fetch extended card. Proceeding with public card.',
                     public_card_url,
                 )
                 return agent_card
@@ -102,19 +106,30 @@ class A2ACardResolver:
                 )
                 extended_response.raise_for_status()
                 extended_agent_card_data = extended_response.json()
-                logger.info("Successfully fetched extended agent card data: %s", extended_agent_card_data) # Added for verbosity
-                print(f"DEBUG: Fetched extended agent card data:\n{json.dumps(extended_agent_card_data, indent=2)}") # Added for direct output
+                logger.info(
+                    'Successfully fetched extended agent card data: %s',
+                    extended_agent_card_data,
+                )  # Added for verbosity
+                print(
+                    f'DEBUG: Fetched extended agent card data:\n{json.dumps(extended_agent_card_data, indent=2)}'
+                )  # Added for direct output
                 # This new card data replaces the old one entirely
                 agent_card = AgentCard.model_validate(extended_agent_card_data)
                 logger.info(
                     'Successfully fetched and using extended agent card from %s',
                     full_extended_card_url,
                 )
-            except (httpx.HTTPStatusError, httpx.RequestError, json.JSONDecodeError, ValidationError) as e:
+            except (
+                httpx.HTTPStatusError,
+                httpx.RequestError,
+                json.JSONDecodeError,
+                ValidationError,
+            ) as e:
                 logger.warning(
                     'Failed to fetch or parse extended agent card from %s. Error: %s. '
                     'Proceeding with the initially fetched public agent card.',
-                    full_extended_card_url, e
+                    full_extended_card_url,
+                    e,
                 )
                 # Fallback to the already parsed public_agent_card (which is 'agent_card' at this point)
 
