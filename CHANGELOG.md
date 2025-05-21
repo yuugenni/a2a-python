@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/google/a2a-python/compare/v0.2.3...v0.2.4) (2025-05-21)
+
+
+### Bug Fixes
+
+* Throw exception for task_id mismatches ([#70](https://github.com/google/a2a-python/issues/70)) ([a9781b5](https://github.com/google/a2a-python/commit/a9781b589075280bfaaab5742d8b950916c9de74))
+
 ## [0.2.3](https://github.com/google/a2a-python/compare/v0.2.2...v0.2.3) (2025-05-20)
 
 
