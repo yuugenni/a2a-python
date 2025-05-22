@@ -1,10 +1,12 @@
 import json
+import logging
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import uuid4
 
 import httpx
 from httpx_sse import SSEError, aconnect_sse
+from pydantic import ValidationError
 
 from a2a.client.errors import A2AClientHTTPError, A2AClientJSONError
 from a2a.types import (AgentCard, CancelTaskRequest, CancelTaskResponse,
@@ -17,6 +19,7 @@ from a2a.types import (AgentCard, CancelTaskRequest, CancelTaskResponse,
                        SetTaskPushNotificationConfigResponse)
 from a2a.utils.telemetry import SpanKind, trace_class
 
+logger = logging.getLogger(__name__)
 
 class A2ACardResolver:
     """Agent Card resolver."""
@@ -122,9 +125,7 @@ class A2ACardResolver:
                     'Successfully fetched extended agent card data: %s',
                     extended_agent_card_data,
                 )  # Added for verbosity
-                print(
-                    f'DEBUG: Fetched extended agent card data:\n{json.dumps(extended_agent_card_data, indent=2)}'
-                )  # Added for direct output
+                
                 # This new card data replaces the old one entirely
                 agent_card = AgentCard.model_validate(extended_agent_card_data)
                 logger.info(

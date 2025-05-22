@@ -34,15 +34,23 @@ class A2AStarletteApplication:
     (SSE).
     """
 
-    def __init__(self, agent_card: AgentCard, http_handler: RequestHandler):
+    def __init__(
+        self,
+        agent_card: AgentCard,
+        http_handler: RequestHandler,
+        extended_agent_card: AgentCard | None = None,
+    ):
         """Initializes the A2AStarletteApplication.
 
         Args:
             agent_card: The AgentCard describing the agent's capabilities.
             http_handler: The handler instance responsible for processing A2A
               requests via http.
+            extended_agent_card: An optional, distinct AgentCard to be served
+              at the authenticated extended card endpoint.
         """
         self.agent_card = agent_card
+        self.extended_agent_card = extended_agent_card
         self.handler = JSONRPCHandler(
             agent_card=agent_card, request_handler=http_handler
         )
@@ -264,44 +272,11 @@ class A2AStarletteApplication:
         Returns:
             A JSONResponse containing the agent card data.
         """
-
-        # Construct the public view of the agent card.
-        public_card_data = {
-            'version': self.agent_card.version,
-            'name': self.agent_card.name,
-            'providerName': self.agent_card.provider.organization
-            if self.agent_card.provider
-            else None,
-            'url': self.agent_card.url,
-            'authentication': self.agent_card.authentication.model_dump(
-                mode='json', exclude_none=True
-            )
-            if self.agent_card.authentication
-            else None,  # authentication is a single object, can be None if made Optional
-            'skills': [
-                f.model_dump(mode='json', exclude_none=True)
-                for f in self.agent_card.skills
-                if f.id == 'hello_world'  # Explicitly filter for public skills
-            ]
-            if self.agent_card.skills
-            else [],  # Default to empty list if no skills
-            'capabilities': self.agent_card.capabilities.model_dump(
-                mode='json', exclude_none=True
-            ),
-            'supportsAuthenticatedExtendedCard': (
-                self.agent_card.supportsAuthenticatedExtendedCard
-            ),
-            # Include other fields from types.py AgentCard designated as public
-            'description': self.agent_card.description,
-            'documentationUrl': self.agent_card.documentationUrl,
-            'defaultInputModes': self.agent_card.defaultInputModes,
-            'defaultOutputModes': self.agent_card.defaultOutputModes,
-        }
-        # Filter out None values from the public card data.
-        public_card_data_cleaned = {
-            k: v for k, v in public_card_data.items() if v is not None
-        }
-        return JSONResponse(public_card_data_cleaned)
+        # The public agent card is a direct serialization of the agent_card
+        # provided at initialization.
+        return JSONResponse(
+            self.agent_card.model_dump(mode='json', exclude_none=True)
+        )
 
     async def _handle_get_authenticated_extended_agent_card(
         self, request: Request
@@ -313,11 +288,15 @@ class A2AStarletteApplication:
                 status_code=404,
             )
 
-        # Authentication and authorization are NOT YET IMPLEMENTED for this endpoint.
-        # As per current requirements, if 'supportsAuthenticatedExtendedCard' is true,
-        # this endpoint returns the complete agent card.
-        # In the future, proper authentication checks will be added here, and the
-        # returned card may be filtered based on the client's authorization scopes.
+        # If an explicit extended_agent_card is provided, serve that.
+        if self.extended_agent_card:
+            return JSONResponse(
+                self.extended_agent_card.model_dump(
+                    mode='json', exclude_none=True
+                )
+            )
+        # Otherwise, if supportsAuthenticatedExtendedCard is true but no specific
+        # extended card is set, serve the main agent_card.
         return JSONResponse(
             self.agent_card.model_dump(mode='json', exclude_none=True)
         )

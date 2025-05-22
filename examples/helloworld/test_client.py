@@ -1,7 +1,10 @@
-from a2a.client import A2AClient
+import logging  # Import the logging module
 from typing import Any
-import httpx
 from uuid import uuid4
+
+import httpx
+
+from a2a.client import A2AClient
 from a2a.types import (
     SendMessageRequest,
     MessageSendParams,
@@ -10,6 +13,9 @@ from a2a.types import (
 
 
 async def main() -> None:
+    # Configure logging to show INFO level messages
+    logging.basicConfig(level=logging.INFO)
+
     async with httpx.AsyncClient() as httpx_client:
         client = await A2AClient.get_client_from_agent_card_url(
             httpx_client, 'http://localhost:9999'
